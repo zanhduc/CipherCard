@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  # 1. Ứng dụng Spring Boot của bạn
+  app:
+    container_name: core-issuer-app
+    build: .
+    ports:
+      - "8080:8080"  # Cổng máy thật : Cổng container
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres_db:5432/card_issuance_db
+      - SPRING_DATASOURCE_USERNAME=bank_user
+      - SPRING_DATASOURCE_PASSWORD=bank_password
+    depends_on:
+      - postgres_db
+    networks:
+      - bank-network
+
+  # 2. Database PostgreSQL
+  postgres_db:
+    image: postgres:15-alpine
+    container_name: bank_postgres
+    environment:
+      POSTGRES_USER: bank_user
+      POSTGRES_PASSWORD: bank_password
+      POSTGRES_DB: card_issuance_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - bank-network
+
+  # 3. SonarQube (Quét code - Optional)
+  sonarqube:
+    image: sonarqube:community
+    container_name: bank_sonarqube
+    ports:
+      - "9000:9000"
+    environment:
+      - SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true
+    volumes:
+      - sonarqube_data:/opt/sonarqube/data
+    networks:
+      - bank-network
+
+networks:
+  bank-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  sonarqube_data:
